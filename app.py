@@ -254,83 +254,8 @@ def page_auto():
                            error=error)
 
 
-@app.route("/mortgage", methods=["GET", "POST"])
-def page_mortgage():
-    data = dmort.copy()
-    result = error = None
-
-    if request.method == "POST":
-        # pull in text & select inputs
-        for k in data:
-            if k != "include_costs":
-                data[k] = request.form.get(k, data[k]).strip()
-        # handle checkbox explicitly
-        data["include_costs"] = "yes" if "include_costs" in request.form else "no"
-
-        try:
-            P   = float(data["price"])
-            dv  = float(data["down_value"])
-            down_amt = (P * dv / 100) if data["down_mode"] == "percent" else dv
-            loan_amt = P - down_amt
-
-            ty  = int(data["term_years"])
-            r   = float(data["rate"])
-            mths = ty * 12
-            pi  = pmt(loan_amt, r, mths)
-
-            # optional costs
-            tax_m = ins_m = pmi_m = hoa_m = oth_m = 0
-            if data["include_costs"] == "yes":
-                tax_m = (P * float(data["tax_pct"]) / 100) / 12
-                ins_m = float(data["insurance"]) / 12
-                pmi_m = float(data["pmi"]) / 12
-                hoa_m = float(data["hoa"]) / 12
-                oth_m = float(data["other_costs"]) / 12
-
-            monthly_total = pi + tax_m + ins_m + pmi_m + hoa_m + oth_m
-
-            # totals over entire term
-            total_pi    = pi * mths
-            total_tax   = tax_m * mths
-            total_ins   = ins_m * mths
-            total_pmi   = pmi_m * mths
-            total_hoa   = hoa_m * mths
-            total_other = oth_m * mths
-            total_cost  = total_pi + total_tax + total_ins + total_pmi + total_hoa + total_other
-
-            # payoff date
-            mon_idx = list(calendar.month_name).index(data["start_month"])
-            first_dt = datetime.date(int(data["start_year"]), mon_idx, int(data["start_day"]))
-            payoff_dt = first_dt.replace(year=first_dt.year + ty)
-            payoff_str = payoff_dt.strftime("%b %d, %Y")
-
-            result = {
-                "monthly_pi":    f"${pi:,.2f}",
-                "monthly_tax":   f"${tax_m:,.2f}",
-                "monthly_ins":   f"${ins_m:,.2f}",
-                "monthly_pmi":   f"${pmi_m:,.2f}",
-                "monthly_hoa":   f"${hoa_m:,.2f}",
-                "monthly_other": f"${oth_m:,.2f}",
-                "total_pi":      f"${total_pi:,.2f}",
-                "total_tax":     f"${total_tax:,.2f}",
-                "total_ins":     f"${total_ins:,.2f}",
-                "total_pmi":     f"${total_pmi:,.2f}",
-                "total_hoa":     f"${total_hoa:,.2f}",
-                "total_other":   f"${total_other:,.2f}",
-                "total_cost":    f"${total_cost:,.2f}",
-                "down_amt":      f"${down_amt:,.2f}",
-                "loan_amt":      f"${loan_amt:,.2f}",
-                "monthly_total": f"${monthly_total:,.2f}",
-                "payoff_date":   payoff_str,
-            }
-        except:
-            error = "Please enter valid mortgage values."
-
-    return render_template("mortgage.html",
-                           data=data,
-                           result=result,
-                           error=error)
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__=="__main__":
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    # listen on 0.0.0.0 so external requests reach your app
+    app.run(host="0.0.0.0", port=port, debug=True)
