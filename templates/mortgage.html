@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Mortgage Calculator{% endblock %}
+{% block content %}
+<div class="calc-card mx-auto">
+  <h1 class="text-center text-warning mb-4">Mortgage Calculator</h1>
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('page_mortgage') }}" class="row gx-3">
+    <input type="hidden" name="mode" value="mortgage"/>
+
+    <div class="col-md-6 mb-3">
+      <label class="form-label text-light">Home Price ($)</label>
+      <input name="price" type="number" step="0.01" class="form-control"
+             value="{{ data.price }}" required>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <label class="form-label text-light">Down Payment</label>
+      <div class="input-group">
+        <input name="down_value" type="number" class="form-control"
+               value="{{ data.down_value }}" required>
+        <select name="down_mode" class="form-select">
+          <option value="percent" {% if data.down_mode=='percent' %}selected{% endif %}>%</option>
+          <option value="amount"  {% if data.down_mode=='amount'  %}selected{% endif %}>$</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <label class="form-label text-light">Term (years)</label>
+      <input name="term_years" type="number" class="form-control"
+             value="{{ data.term_years }}" required>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <label class="form-label text-light">Interest Rate (%)</label>
+      <input name="rate" type="number" step="0.001" class="form-control"
+             value="{{ data.rate }}" required>
+    </div>
+
+    <div class="col-md-8 mb-3">
+      <label class="form-label text-light">Start Date</label>
+      <div class="d-flex">
+        <select name="start_month" class="form-select me-1">
+          {% for m in ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] %}
+          <option value="{{ m }}" {% if data.start_month==m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+        <input name="start_day" type="number" min="1" max="28" class="form-control me-1"
+               value="{{ data.start_day }}" required>
+        <input name="start_year" type="number" class="form-control"
+               value="{{ data.start_year }}" required>
+      </div>
+    </div>
+
+    <div class="col-12 mb-3 form-check">
+      <input name="include_costs" type="checkbox" class="form-check-input" id="incCosts"
+             value="yes" {% if data.include_costs=='yes' %}checked{% endif %}>
+      <label class="form-check-label text-light" for="incCosts">
+        Include Taxes & Costs Below
+      </label>
+    </div>
+
+    <div id="costInputs">
+      <div class="row gx-3">
+        <div class="col-md-4 mb-3">
+          <label class="form-label text-light">Property Tax (%)</label>
+          <input name="tax_pct" type="number" step="0.01" class="form-control"
+                 value="{{ data.tax_pct }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label text-light">Home Insurance ($/yr)</label>
+          <input name="insurance" type="number" step="0.01" class="form-control"
+                 value="{{ data.insurance }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label text-light">PMI Insurance ($/yr)</label>
+          <input name="pmi" type="number" step="0.01" class="form-control"
+                 value="{{ data.pmi }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label text-light">HOA Fee ($/yr)</label>
+          <input name="hoa" type="number" step="0.01" class="form-control"
+                 value="{{ data.hoa }}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label text-light">Other Costs ($/yr)</label>
+          <input name="other_costs" type="number" step="0.01" class="form-control"
+                 value="{{ data.other_costs }}">
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 text-center">
+      <button class="btn btn-primary">Calculate Mortgage</button>
+    </div>
+  </form>
+
+  {% if result %}
+  <div class="mt-4">
+    <div class="alert alert-success text-center">
+      <strong>Monthly:</strong> {{ result.monthly }} |
+      <strong>Payoff:</strong> {{ result.payoff }}
+    </div>
+    <table class="table table-dark table-striped mt-3">
+      <thead><tr><th>Component</th><th>Monthly</th><th>Total</th></tr></thead>
+      <tbody>
+        <tr><td>Principal & Interest</td><td>{{ result.monthly_pi }}</td><td>{{ result.total_pi }}</td></tr>
+        {% if data.include_costs=='yes' %}
+        <tr><td>Property Tax</td><td>{{ result.monthly_tax }}</td><td>{{ result.total_tax }}</td></tr>
+        <tr><td>Home Insurance</td><td>{{ result.monthly_ins }}</td><td>{{ result.total_ins }}</td></tr>
+        <tr><td>PMI Insurance</td><td>{{ result.monthly_pmi }}</td><td>{{ result.total_pmi }}</td></tr>
+        <tr><td>HOA Fee</td><td>{{ result.monthly_hoa }}</td><td>{{ result.total_hoa }}</td></tr>
+        <tr><td>Other Costs</td><td>{{ result.monthly_other }}</td><td>{{ result.total_other }}</td></tr>
+        {% endif %}
+        <tr class="fw-bold"><td>Total Out‑of‑Pocket</td><td>{{ result.monthly }}</td><td>{{ result.total_cost }}</td></tr>
+        <tr class="table-secondary"><td>House Price</td><td colspan="2">${{ data.price }}</td></tr>
+        <tr><td>Loan Amount</td><td colspan="2">{{ result.loan_amt }}</td></tr>
+        <tr><td>Down Payment</td><td colspan="2">{{ result.down }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <script>
+    const inc = document.getElementById('incCosts'),
+          costs = document.getElementById('costInputs');
+    function toggle(){ costs.style.display = inc.checked ? 'block' : 'none' }
+    inc.addEventListener('change', toggle);
+    window.addEventListener('load', toggle);
+  </script>
+</div>
+{% endblock %}

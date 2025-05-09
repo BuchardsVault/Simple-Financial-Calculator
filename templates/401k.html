@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}401k Calculator{% endblock %}
+
+{% block content %}
+<div class="calc-card mx-auto">
+  <h1 class="text-center text-warning mb-4">401k Calculator</h1>
+
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('page_401k') }}" class="row gx-4">
+    <!-- Basic Info -->
+    <div class="col-md-6">
+      <h5 class="text-light">Basic Info</h5>
+      {% for label,key,unit in [
+        ("Current age","current_age",""),
+        ("Current salary ($)","current_salary",""),
+        ("Current balance ($)","current_balance",""),
+        ("Contribution (%)","contrib_pct","%"),
+        ("Employer match (%)","match_pct","%"),
+        ("Match limit (%)","match_limit_pct","%")
+      ] %}
+      <div class="mb-3">
+        <label class="form-label text-light">{{ label }}</label>
+        <div class="input-group">
+          <input name="{{ key }}" type="number" step="any"
+                 class="form-control" value="{{ data[key] }}" required>
+          {% if unit %}<span class="input-group-text">{{ unit }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Projections -->
+    <div class="col-md-6">
+      <h5 class="text-light">Projections</h5>
+      {% for label,key,unit in [
+        ("Retirement age","retire_age",""),
+        ("Life expectancy","life_exp",""),
+        ("Salary growth (%)","salary_growth","%"),
+        ("Annual return (%)","annual_return","%"),
+        ("Inflation rate (%)","inflation","%")
+      ] %}
+      <div class="mb-3">
+        <label class="form-label text-light">{{ label }}</label>
+        <div class="input-group">
+          <input name="{{ key }}" type="number" step="any"
+                 class="form-control" value="{{ data[key] }}" required>
+          {% if unit %}<span class="input-group-text">{{ unit }}</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="col-12 text-center">
+      <button class="btn btn-primary">Compute Projection</button>
+    </div>
+  </form>
+
+  {% if result %}
+    <div class="alert alert-success mt-4 text-center">
+      At the retirement age of {{ result.retire_age }}, your 401(k) balance will be
+      <strong>{{ result.nest }}</strong>,<br>
+      which is equivalent to <strong>{{ result.pv }}</strong> in purchasing power today.
+    </div>
+
+    <table class="table table-dark table-striped mt-3">
+      <thead>
+        <tr><th>Metric</th><th>Amount</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Total employee contributions</td><td>{{ result.emp_cont }}</td></tr>
+        <tr><td>Total employer match</td>      <td>{{ result.match   }}</td></tr>
+        <tr><td><strong>Investment returns</strong></td><td><strong>{{ result.returns }}</strong></td></tr>
+      </tbody>
+    </table>
+  {% endif %}
+
+</div>
+{% endblock %}

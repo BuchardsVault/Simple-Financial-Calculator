@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Salary Calculator{% endblock %}
+
+{% block content %}
+<div class="calc-card mx-auto">
+  <h1 class="text-center text-warning mb-4">Salary Calculator</h1>
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('page_salary') }}"
+        class="row gx-3 align-items-end">
+    <input type="hidden" name="mode" value="salary"/>
+
+    <div class="col-md-6 mb-3">
+      <label class="form-label text-light">Salary amount</label>
+      <div class="input-group">
+        <span class="input-group-text">$</span>
+        <input name="salary_amt" type="number" step="any" class="form-control"
+               value="{{ data.salary_amt }}" required>
+        <select name="salary_freq" class="form-select">
+          {% for val,label in [
+            ('hour','Hour'),
+            ('day','Day'),
+            ('week','Week'),
+            ('month','Month'),
+            ('year','Year')
+          ] %}
+          <option value="{{ val }}"
+            {% if data.salary_freq==val %}selected{% endif %}>
+            {{ label }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <label class="form-label text-light">Hours per week</label>
+      <input name="hours_week" type="number" step="any" class="form-control"
+             value="{{ data.hours_week }}" required>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <label class="form-label text-light">Days per week</label>
+      <input name="days_week" type="number" step="any" class="form-control"
+             value="{{ data.days_week }}" required>
+    </div>
+
+    <div class="col-12 text-center">
+      <button class="btn btn-primary">Calculate</button>
+    </div>
+  </form>
+
+  {% if table %}
+  <div class="mt-4">
+    <table class="table table-dark table-striped">
+      <thead>
+        <tr><th>Cadence</th><th>Unadjusted</th><th>Adjusted</th></tr>
+      </thead>
+      <tbody>
+        {% for row in table %}
+        <tr>
+          <td>{{ row.label }}</td>
+          <td>${{ "{:,.2f}".format(row.unadj) }}</td>
+          <td>${{ "{:,.2f}".format(row.adj) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
