@@ -1,4 +1,2 @@
-1. requirements.txt
-```
-Flask==3.0.3
-```
+
+Flask
